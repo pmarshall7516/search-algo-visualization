@@ -178,6 +178,7 @@ function App() {
   const [isMouseDown, setIsMouseDown] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [statusMessage, setStatusMessage] = useState('Place a start and target to begin.')
+  const [stats, setStats] = useState({ dijkstra: null, astar: null })
 
   useEffect(() => {
     const handleMouseUp = () => setIsMouseDown(false)
@@ -199,6 +200,7 @@ function App() {
 
   const resetBoard = () => {
     clearOverlays()
+    setStats({ dijkstra: null, astar: null })
     setStatusMessage('Simulation cleared. Ready for another run.')
   }
 
@@ -207,6 +209,7 @@ function App() {
     setStartCell(null)
     setTargetCell(null)
     clearOverlays()
+    setStats({ dijkstra: null, astar: null })
     setStatusMessage('Board cleared. Configure a new run.')
   }
 
@@ -224,6 +227,7 @@ function App() {
     setStartCell(null)
     setTargetCell(null)
     clearOverlays()
+    setStats({ dijkstra: null, astar: null })
     setStatusMessage('Grid resized. Place your start and target nodes.')
   }
 
@@ -289,10 +293,39 @@ function App() {
     clearOverlays()
     setStatusMessage('Running search algorithms...')
 
-    const dijkstraResult = dijkstraEnabled
-      ? runDijkstra(grid, startCell, targetCell)
-      : null
-    const astarResult = astarEnabled ? runAStar(grid, startCell, targetCell) : null
+    let dijkstraResult = null
+    let astarResult = null
+    let dijkstraTime = null
+    let astarTime = null
+
+    if (dijkstraEnabled) {
+      const startTime = performance.now()
+      dijkstraResult = runDijkstra(grid, startCell, targetCell)
+      dijkstraTime = performance.now() - startTime
+    }
+
+    if (astarEnabled) {
+      const startTime = performance.now()
+      astarResult = runAStar(grid, startCell, targetCell)
+      astarTime = performance.now() - startTime
+    }
+
+    setStats({
+      dijkstra: dijkstraResult
+        ? {
+            timeMs: dijkstraTime,
+            visited: dijkstraResult.visitedOrder.length,
+            pathLength: dijkstraResult.path.length,
+          }
+        : null,
+      astar: astarResult
+        ? {
+            timeMs: astarTime,
+            visited: astarResult.visitedOrder.length,
+            pathLength: astarResult.path.length,
+          }
+        : null,
+    })
 
     const visitLength = Math.max(
       dijkstraResult?.visitedOrder.length ?? 0,
@@ -378,6 +411,11 @@ function App() {
           : !dijkstraEnabled && !astarEnabled
             ? 'Select at least one algorithm to run.'
             : 'Ready to visualize.'
+
+  const formatTime = (timeMs) => {
+    if (timeMs === null || Number.isNaN(timeMs)) return '--'
+    return `${timeMs.toFixed(2)} ms`
+  }
 
   return (
     <div className="app-shell">
@@ -467,17 +505,6 @@ function App() {
                   >
                     A*
                   </button>
-                  <button
-                    className="button button--both"
-                    onClick={() => {
-                      setDijkstraEnabled(true)
-                      setAstarEnabled(true)
-                    }}
-                    type="button"
-                    disabled={isRunning}
-                  >
-                    Both
-                  </button>
                 </div>
               </div>
 
@@ -526,69 +553,108 @@ function App() {
                 </div>
               </div>
             </div>
+            <div className="visualizer-layout">
+              <div className="grid-wrapper">
+                <div
+                  className="grid-board"
+                  style={{
+                    gridTemplateColumns: `repeat(${gridSize}, ${cellSize}px)`,
+                    gridAutoRows: `${cellSize}px`,
+                    '--cell-size': `${cellSize}px`,
+                  }}
+                  onMouseLeave={() => setIsMouseDown(false)}
+                >
+                  {grid.map((row) =>
+                    row.map((cell) => {
+                      const key = cellKey(cell.row, cell.col)
+                      const isStart =
+                        startCell && startCell.row === cell.row && startCell.col === cell.col
+                      const isTarget =
+                        targetCell && targetCell.row === cell.row && targetCell.col === cell.col
+                      const isWall = cell.isWall
+                      const dVisited = visitedDijkstra.has(key)
+                      const aVisited = visitedAstar.has(key)
+                      const dPath = pathDijkstra.has(key)
+                      const aPath = pathAstar.has(key)
 
-            <div className="grid-wrapper">
-              <div
-                className="grid-board"
-                style={{
-                  gridTemplateColumns: `repeat(${gridSize}, ${cellSize}px)`,
-                  gridAutoRows: `${cellSize}px`,
-                  '--cell-size': `${cellSize}px`,
-                }}
-                onMouseLeave={() => setIsMouseDown(false)}
-              >
-                {grid.map((row) =>
-                  row.map((cell) => {
-                    const key = cellKey(cell.row, cell.col)
-                    const isStart =
-                      startCell && startCell.row === cell.row && startCell.col === cell.col
-                    const isTarget =
-                      targetCell && targetCell.row === cell.row && targetCell.col === cell.col
-                    const isWall = cell.isWall
-                    const dVisited = visitedDijkstra.has(key)
-                    const aVisited = visitedAstar.has(key)
-                    const dPath = pathDijkstra.has(key)
-                    const aPath = pathAstar.has(key)
+                      let cellClass = 'cell'
+                      if (isStart) {
+                        cellClass += ' cell--start'
+                      } else if (isTarget) {
+                        cellClass += ' cell--target'
+                      } else if (isWall) {
+                        cellClass += ' cell--wall'
+                      } else if (dPath && aPath) {
+                        cellClass += ' cell--both-path'
+                      } else if (dPath) {
+                        cellClass += ' cell--dijkstra-path'
+                      } else if (aPath) {
+                        cellClass += ' cell--astar-path'
+                      } else if (dVisited && aVisited) {
+                        cellClass += ' cell--both-visited'
+                      } else if (dVisited) {
+                        cellClass += ' cell--dijkstra-visited'
+                      } else if (aVisited) {
+                        cellClass += ' cell--astar-visited'
+                      }
 
-                    let cellClass = 'cell'
-                    if (isStart) {
-                      cellClass += ' cell--start'
-                    } else if (isTarget) {
-                      cellClass += ' cell--target'
-                    } else if (isWall) {
-                      cellClass += ' cell--wall'
-                    } else if (dPath && aPath) {
-                      cellClass += ' cell--both-path'
-                    } else if (dPath) {
-                      cellClass += ' cell--dijkstra-path'
-                    } else if (aPath) {
-                      cellClass += ' cell--astar-path'
-                    } else if (dVisited && aVisited) {
-                      cellClass += ' cell--both-visited'
-                    } else if (dVisited) {
-                      cellClass += ' cell--dijkstra-visited'
-                    } else if (aVisited) {
-                      cellClass += ' cell--astar-visited'
-                    }
-
-                    return (
-                      <div
-                        key={key}
-                        className={cellClass}
-                        role="button"
-                        tabIndex={0}
-                        onMouseDown={() => handleMouseDown(cell.row, cell.col)}
-                        onMouseEnter={() => handleMouseEnter(cell.row, cell.col)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            handleCellAction(cell.row, cell.col, false)
-                          }
-                        }}
-                      />
-                    )
-                  }),
-                )}
+                      return (
+                        <div
+                          key={key}
+                          className={cellClass}
+                          role="button"
+                          tabIndex={0}
+                          onMouseDown={() => handleMouseDown(cell.row, cell.col)}
+                          onMouseEnter={() => handleMouseEnter(cell.row, cell.col)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              handleCellAction(cell.row, cell.col, false)
+                            }
+                          }}
+                        />
+                      )
+                    }),
+                  )}
+                </div>
               </div>
+              <aside className="panel summary-panel">
+                <div className="section-header">
+                  <h2>Search Summary</h2>
+                  <p>Live stats after each run.</p>
+                </div>
+                <div className="summary-grid">
+                  <div className="summary-card summary-card--dijkstra">
+                    <h3>Dijkstra</h3>
+                    <div className="summary-stat">
+                      <span>Time</span>
+                      <strong>{formatTime(stats.dijkstra?.timeMs ?? null)}</strong>
+                    </div>
+                    <div className="summary-stat">
+                      <span>Visited</span>
+                      <strong>{stats.dijkstra?.visited ?? '--'}</strong>
+                    </div>
+                    <div className="summary-stat">
+                      <span>Path length</span>
+                      <strong>{stats.dijkstra?.pathLength ?? '--'}</strong>
+                    </div>
+                  </div>
+                  <div className="summary-card summary-card--astar">
+                    <h3>A*</h3>
+                    <div className="summary-stat">
+                      <span>Time</span>
+                      <strong>{formatTime(stats.astar?.timeMs ?? null)}</strong>
+                    </div>
+                    <div className="summary-stat">
+                      <span>Visited</span>
+                      <strong>{stats.astar?.visited ?? '--'}</strong>
+                    </div>
+                    <div className="summary-stat">
+                      <span>Path length</span>
+                      <strong>{stats.astar?.pathLength ?? '--'}</strong>
+                    </div>
+                  </div>
+                </div>
+              </aside>
             </div>
           </section>
         </div>

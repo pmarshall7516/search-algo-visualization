@@ -163,6 +163,13 @@ a {
   gap: 24px;
 }
 
+.visualizer-layout {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
 .control-grid {
   display: grid;
   gap: 18px;
@@ -291,6 +298,51 @@ a {
   padding: 12px;
   border-radius: 14px;
   box-shadow: inset 0 0 0 1px rgba(71, 244, 255, 0.08);
+}
+
+.summary-panel {
+  background: rgba(12, 18, 30, 0.92);
+  border-radius: 18px;
+  padding: 20px;
+  border: 1px solid rgba(71, 244, 255, 0.2);
+}
+
+.summary-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.summary-card {
+  background: rgba(7, 10, 18, 0.6);
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid rgba(71, 244, 255, 0.12);
+}
+
+.summary-card h3 {
+  margin-bottom: 12px;
+}
+
+.summary-card--dijkstra h3 {
+  color: var(--teal);
+}
+
+.summary-card--astar h3 {
+  color: var(--purple);
+}
+
+.summary-stat {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.summary-stat strong {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .cell {
@@ -425,5 +477,9 @@ a {
 
   .grid-board {
     justify-content: flex-start;
+  }
+
+  .visualizer-layout {
+    grid-template-columns: 1fr;
   }
 }

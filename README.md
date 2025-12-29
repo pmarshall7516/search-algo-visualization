@@ -1,16 +1,38 @@
-# React + Vite
+# Search Algorithm Visualizer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React app that lets you build a grid, place a start and target, draw walls, and watch Dijkstra and A* explore the map in real time. Each algorithm paints its visited cells and then highlights the shortest path it finds.
 
-Currently, two official plugins are available:
+## What this visualizer does
+- Lets you set the grid size.
+- Place a single Start (green) and a single Target (red).
+- Draw Walls (blue) by clicking or dragging.
+- Toggle Dijkstra, A*, or both, then run the simulation.
+- Animates each algorithm’s search and final shortest path.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## The Algorithms...
 
-## React Compiler
+### Dijkstra’s Algorithm
+- Think of it as a careful explorer that expands outward from the start in all directions.
+- It guarantees the shortest path in grids with equal movement cost.
+- Because it explores evenly, it can visit a lot of cells before reaching the target.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### A* (A-star)
+- A* uses the same careful cost tracking as Dijkstra, but adds a “guess” (heuristic) to steer toward the target.
+- The heuristic used here is Manhattan distance (how many steps away in a grid).
+- It still finds the shortest path, but usually visits fewer cells than Dijkstra.
 
-## Expanding the ESLint configuration
+## How to use
+1. Set the grid size and click Apply.
+2. Select a draw tool: Start, Wall, or Target.
+3. Click the grid to place the Start and Target, then paint walls.
+4. Toggle Dijkstra, A*, or Both.
+5. Click Start Search to run the visualization.
+6. Use Reset Simulation to clear only the algorithm colors.
+7. Use Clear to remove everything from the board.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Color guide
+- Green: Start
+- Red: Target
+- Blue: Wall
+- Teal: Dijkstra visited/path
+- Purple: A* visited/path
